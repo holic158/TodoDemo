@@ -34,7 +34,7 @@ public class TodoController {
     @PostMapping
     public ResponseEntity<?> creaeteTodo(@RequestBody TodoDTO dto) {
         try {
-            String tempId = "tempUser";
+            String tempId = "temporary-user";
 
             // 1. TodoEntity로 변환
             TodoEntity entity = TodoDTO.toEntity(dto);
@@ -57,6 +57,54 @@ public class TodoController {
             // 7. Response DTO를 리턴한다
             return ResponseEntity.ok().body(response);
 
+        } catch (Exception e) {
+            String error = e.getMessage();
+            ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().error(error).build();
+            return ResponseEntity.badRequest().body(response);
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<?> retrieveTodoList() {
+        String temporaryUserId = "temporary-user"; // temporary user id.
+
+        // (1) 서비스 메서드의 retrieve메서드를 사용해 Todo리스트를 가져온다
+        List<TodoEntity> entities = service.retrieve(temporaryUserId);
+
+        // (2) 자바 스트림을 이용해 리턴된 엔티티 리스트를 TodoDTO리스트로 변환한다.
+        List<TodoDTO> dtos = entities.stream().map(TodoDTO::new).collect(Collectors.toList());
+
+        // (6) 변환된 TodoDTO리스트를 이용해ResponseDTO를 초기화한다.
+        ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().data(dtos).build();
+
+        // (7) ResponseDTO를 리턴한다.
+        return ResponseEntity.ok().body(response);
+    }
+
+    @PutMapping
+    public ResponseEntity<?> updateTodo(@RequestBody TodoDTO dto) {
+        String temporaryUserId = "temporary-user";
+
+        TodoEntity entity = TodoDTO.toEntity(dto);
+        entity.setUserId(temporaryUserId);
+        List<TodoEntity> entities = service.update(entity);
+        List<TodoDTO> dtos = entities.stream().map(TodoDTO::new).collect(Collectors.toList());
+        ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().data(dtos).build();
+        return ResponseEntity.ok().body(response);
+    }
+
+    @DeleteMapping
+    public ResponseEntity<?> deleteTodo(@RequestBody TodoDTO dto) {
+        try {
+            String temporaryUserId = "temporary-user";
+            // 1. TodoEntity로 변환한다
+            TodoEntity entity = TodoDTO.toEntity(dto);
+            entity.setUserId(temporaryUserId);
+            List<TodoEntity> entities = service.delete(entity);
+            List<TodoDTO> dtos = entities.stream().map(TodoDTO::new).collect(Collectors.toList());
+            ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().data(dtos).build();
+
+            return ResponseEntity.ok().body(response);
         } catch (Exception e) {
             String error = e.getMessage();
             ResponseDTO<TodoDTO> response = ResponseDTO.<TodoDTO>builder().error(error).build();
